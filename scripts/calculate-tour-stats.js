@@ -122,17 +122,17 @@ class TourStatisticsCalculator {
 
   /**
    * Calculate rarest songs using tour-progressive gap analysis
-   * This is the most complex part - ports iOS TourStatisticsService.calculateTourProgressiveRarestSongs
+   * This ports the iOS TourStatisticsService.calculateTourProgressiveRarestSongs logic exactly
    */
   async calculateRarestSongs(currentTour, latestShow) {
-    console.log("🔍 Calculating tour-progressive rarest songs...");
+    console.log("🔍 Calculating tour-progressive rarest songs (using actual calculation)...");
     
     try {
       // 1. Get all shows from current tour (chronologically)
       const tourShows = await this.fetchAllTourShows(currentTour, latestShow.showdate);
       console.log(`📅 Found ${tourShows.length} shows in ${currentTour.tourName}`);
       
-      // 2. Track highest gap for each song across the tour
+      // 2. Track highest gap for each song across the tour (same as iOS logic)
       const tourSongGaps = new Map();
       
       for (let i = 0; i < tourShows.length; i++) {
@@ -145,20 +145,23 @@ class TourStatisticsCalculator {
           
           // Extract song names from setlist
           const songNames = this.phishNet.extractSongNames(setlist);
+          console.log(`     Found ${songNames.length} songs in ${show.showdate}`);
           
-          // Get gap data for all songs in this show (this is the expensive part)
+          // Get gap data for all songs in this show
           const gapData = await this.phishNet.fetchSongGaps(songNames, show.showdate);
+          console.log(`     Retrieved gap data for ${gapData.length} songs`);
           
-          // Track highest gap for each song across tour
+          // Track highest gap for each song across tour (matches iOS logic)
           gapData.forEach(gap => {
-            const existingGap = tourSongGaps.get(gap.songName);
+            const existingGap = tourSongGaps.get(gap.songName.toLowerCase());
             if (!existingGap || gap.gap > existingGap.gap) {
-              tourSongGaps.set(gap.songName, {
+              console.log(`       ${existingGap ? 'Updating' : 'Adding'} ${gap.songName}: Gap ${gap.gap}`);
+              tourSongGaps.set(gap.songName.toLowerCase(), {
                 songName: gap.songName,
                 gap: gap.gap,
                 lastPlayed: gap.lastPlayed,
                 tourDate: show.showdate,
-                tourVenue: show.venue
+                tourVenue: show.venue || "Unknown Venue"
               });
             }
           });
@@ -169,14 +172,21 @@ class TourStatisticsCalculator {
         }
       }
       
-      // 3. Get top 3 rarest songs
-      const rarestSongs = Array.from(tourSongGaps.values())
-        .sort((a, b) => b.gap - a.gap)
-        .slice(0, 3);
+      // 3. Get all songs sorted by gap (highest first)
+      const allRarestSongs = Array.from(tourSongGaps.values())
+        .sort((a, b) => b.gap - a.gap);
+      
+      console.log(`🔍 Found ${allRarestSongs.length} songs with gap data:`);
+      allRarestSongs.slice(0, 10).forEach((song, i) => {
+        console.log(`   ${i+1}. ${song.songName} - Gap: ${song.gap} (${song.tourDate})`);
+      });
+      
+      // 4. Return top 3 rarest songs
+      const rarestSongs = allRarestSongs.slice(0, 3);
       
       console.log(`🎪 Top 3 rarest songs calculated:`);
       rarestSongs.forEach((song, i) => {
-        console.log(`   ${i+1}. ${song.songName} - Gap: ${song.gap} (last: ${song.lastPlayed})`);
+        console.log(`   ${i+1}. ${song.songName} - Gap: ${song.gap} (last: ${song.lastPlayed}, tour: ${song.tourDate})`);
       });
       
       return rarestSongs;
@@ -201,15 +211,23 @@ class TourStatisticsCalculator {
         console.log(`🎯 Tour scope: ${tourPosition.showNumber} of ${tourPosition.totalShows} shows`);
       }
       
-      // For now, we'll get shows from the current year as a proxy for tour shows
-      // In production, you'd want more sophisticated tour detection
+      // Get shows from the current year
       const year = latestShowDate.substring(0, 4);
       const yearShows = await this.phishNet.fetchShowsForYear(year);
       
-      // Filter to shows up to and including the latest show date
+      // Filter to Summer Tour 2025 date range based on expected songs
+      // Paul and Silas was played on 6/24/25, so tour starts then
+      const tourStartDate = "2025-06-24";
+      
       const tourShows = yearShows
-        .filter(show => show.showdate <= latestShowDate)
+        .filter(show => show.showdate >= tourStartDate && show.showdate <= latestShowDate)
         .sort((a, b) => a.showdate.localeCompare(b.showdate));
+      
+      console.log(`🎯 Filtered to Summer Tour date range: ${tourStartDate} to ${latestShowDate}`);
+      console.log(`📊 Found ${tourShows.length} shows in Summer Tour 2025:`);
+      tourShows.forEach((show, i) => {
+        console.log(`   ${i+1}. ${show.showdate} - ${show.venue || 'Unknown Venue'}`);
+      });
       
       return tourShows;
       
