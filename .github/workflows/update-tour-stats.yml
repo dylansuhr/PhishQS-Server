@@ -1,0 +1,107 @@
+name: Update Tour Statistics
+
+on:
+  schedule:
+    # Every 6 hours during tour season
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update even if no new shows detected'
+        type: boolean
+        default: false
+      operation:
+        description: 'Operation to perform'
+        type: choice
+        options: 
+          - 'update'
+          - 'health-check'
+          - 'test-calculation'
+        default: 'update'
+
+jobs:
+  update-tour-statistics:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tour statistics operation
+      env:
+        PHISH_NET_API_KEY: ${{ secrets.PHISH_NET_API_KEY }}
+        FORCE_UPDATE: ${{ github.event.inputs.force_update }}
+        OPERATION: ${{ github.event.inputs.operation || 'update' }}
+      run: |
+        echo "🚀 Starting PhishQS tour statistics operation: $OPERATION"
+        
+        case "$OPERATION" in
+          "health-check")
+            echo "🔍 Running system health checks..."
+            npm run health-check
+            ;;
+          "test-calculation")
+            echo "🧪 Running calculation test..."
+            npm run test
+            ;;
+          "update"|*)
+            echo "🎯 Running tour statistics update..."
+            npm run start
+            ;;
+        esac
+        
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "phishqs-bot@users.noreply.github.com"
+        git config --local user.name "PhishQS Bot"
+        
+        # Add changed files
+        git add current-tour-stats.json data/state.json
+        
+        # Only commit if there are changes
+        if ! git diff --staged --quiet; then
+          echo "📝 Changes detected, committing update..."
+          git commit -m "🎵 Update tour statistics - $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
+          echo "✅ Tour statistics updated and deployed"
+        else
+          echo "📊 No changes detected, statistics are current"
+        fi
+        
+    - name: Validate JSON structure
+      run: |
+        echo "🔍 Validating JSON structure..."
+        node -e "
+          const fs = require('fs');
+          try {
+            const data = JSON.parse(fs.readFileSync('current-tour-stats.json', 'utf8'));
+            console.log('✅ JSON structure is valid');
+            console.log(\`📊 Tour: \${data.tourName}\`);
+            console.log(\`🎵 Longest songs: \${data.longestSongs?.length || 0}\`);
+            console.log(\`🎪 Rarest songs: \${data.rarestSongs?.length || 0}\`);
+            console.log(\`⏰ Last updated: \${data.lastUpdated}\`);
+            
+            if (!data.tourName || !data.lastUpdated || !data.latestShow) {
+              throw new Error('Missing required fields');
+            }
+          } catch (error) {
+            console.error('❌ JSON validation failed:', error.message);
+            process.exit(1);
+          }
+        "
+        
+    - name: Performance report
+      if: success()
+      run: |
+        echo "📈 Deployment completed successfully"
+        echo "🌐 Endpoint: https://$(echo $GITHUB_REPOSITORY | cut -d'/' -f1).github.io/$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)/current-tour-stats.json"
+        echo "🎯 Expected iOS app performance: 60s → <1s load time"

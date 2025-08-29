@@ -1,0 +1,12 @@
+{
+  "lastProcessedShow": null,
+  "lastUpdateTime": null,
+  "processingStatus": "initial-setup",
+  "tourName": null,
+  "dataQuality": {
+    "longestSongsCount": 0,
+    "rarestSongsCount": 0,
+    "completeness": 0
+  },
+  "notes": "Initial state file - will be updated after first successful run"
+}
