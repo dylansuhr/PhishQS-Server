@@ -1,12 +1,14 @@
 {
   "lastProcessedShow": null,
   "lastUpdateTime": null,
-  "processingStatus": "initial-setup",
+  "processingStatus": "error",
   "tourName": null,
   "dataQuality": {
     "longestSongsCount": 0,
     "rarestSongsCount": 0,
     "completeness": 0
   },
-  "notes": "Initial state file - will be updated after first successful run"
+  "notes": "Initial state file - will be updated after first successful run",
+  "lastError": "No recent shows found",
+  "lastErrorTime": "2025-08-29T17:04:10.536Z"
 }
