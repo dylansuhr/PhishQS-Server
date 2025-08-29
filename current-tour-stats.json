@@ -7,7 +7,7 @@
       "songName": "What's Going Through Your Mind",
       "durationSeconds": 2544,
       "showDate": "2025-06-24",
-      "venue": "Unknown Venue",
+      "venue": "Bethel Woods Center for the Arts",
       "venueRun": {
         "showNumber": 1,
         "totalShows": 1,
@@ -29,7 +29,7 @@
       "songName": "Down with Disease",
       "durationSeconds": 2048,
       "showDate": "2025-07-11",
-      "venue": "Unknown Venue",
+      "venue": "Pine Knob Music Theatre",
       "venueRun": {
         "showNumber": 1,
         "totalShows": 1,
@@ -50,14 +50,14 @@
       "gap": 323,
       "lastPlayed": "2016-07-22",
       "tourDate": "2025-06-24",
-      "tourVenue": "Unknown Venue"
+      "tourVenue": "Bethel Woods Center for the Arts"
     },
     {
       "songName": "Devotion To A Dream",
       "gap": 322,
       "lastPlayed": "2016-10-15",
       "tourDate": "2025-07-11",
-      "tourVenue": "Unknown Venue"
+      "tourVenue": "Pine Knob Music Theatre"
     }
   ]
 }

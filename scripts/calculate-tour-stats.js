@@ -143,6 +143,10 @@ class TourStatisticsCalculator {
           // Get setlist for this show
           const setlist = await this.phishNet.fetchShowSetlist(show.showdate);
           
+          // Extract venue from setlist response (more reliable than year-based data)
+          const actualVenue = setlist.venue || show.venue || "Unknown Venue";
+          console.log(`     Venue: ${actualVenue}`);
+          
           // Extract song names from setlist
           const songNames = this.phishNet.extractSongNames(setlist);
           console.log(`     Found ${songNames.length} songs in ${show.showdate}`);
@@ -155,13 +159,13 @@ class TourStatisticsCalculator {
           gapData.forEach(gap => {
             const existingGap = tourSongGaps.get(gap.songName.toLowerCase());
             if (!existingGap || gap.gap > existingGap.gap) {
-              console.log(`       ${existingGap ? 'Updating' : 'Adding'} ${gap.songName}: Gap ${gap.gap}`);
+              console.log(`       ${existingGap ? 'Updating' : 'Adding'} ${gap.songName}: Gap ${gap.gap} at ${actualVenue}`);
               tourSongGaps.set(gap.songName.toLowerCase(), {
                 songName: gap.songName,
                 gap: gap.gap,
                 lastPlayed: gap.lastPlayed,
                 tourDate: show.showdate,
-                tourVenue: show.venue || "Unknown Venue"
+                tourVenue: actualVenue
               });
             }
           });
