@@ -64,7 +64,7 @@ async function checkAPIConnectivity() {
     }
     
     // Test Phish.net API
-    const phishNetURL = `https://api.phish.net/v5/setlists/recent.json?apikey=${process.env.PHISH_NET_API_KEY}&limit=1`;
+    const phishNetURL = `https://api.phish.net/v5/setlists/recent.json?apikey=${process.env.PHISH_NET_API_KEY}&limit=1&artist=phish`;
     const phishNetResponse = await fetch(phishNetURL);
     
     if (!phishNetResponse.ok) {

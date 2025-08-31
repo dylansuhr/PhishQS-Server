@@ -49,7 +49,7 @@ class PhishNetClient {
   async fetchLatestShow() {
     console.log("📡 Fetching latest show from Phish.net...");
     
-    const url = `${this.baseURL}/setlists/recent.json?apikey=${this.apiKey}&limit=1`;
+    const url = `${this.baseURL}/setlists/recent.json?apikey=${this.apiKey}&limit=1&artist=phish`;
     const response = await this.makeRequest(url);
     
     if (!response.data || response.data.length === 0) {
@@ -95,7 +95,7 @@ class PhishNetClient {
    */
   async fetchSongGap(songName, showDate) {
     const encodedSongName = encodeURIComponent(songName);
-    const url = `${this.baseURL}/setlists/song/${encodedSongName}.json?apikey=${this.apiKey}&order_by=showdate&direction=asc`;
+    const url = `${this.baseURL}/setlists/song/${encodedSongName}.json?apikey=${this.apiKey}&order_by=showdate&direction=asc&artist=phish`;
     
     const response = await this.makeRequest(url);
     
