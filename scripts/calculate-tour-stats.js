@@ -56,9 +56,9 @@ class TourStatisticsCalculator {
         latestShow = await this.phishNet.fetchLatestShow();
         currentTour = await this.phishIn.getTourForShow(latestShow.showdate);
       } catch (error) {
-        console.log("⚠️ No recent shows found, generating test data to validate venue fixes...");
-        // Create test data that demonstrates our venue consistency fixes
-        return await this.generateTestDataForVenueFixes();
+        console.log("⚠️ No recent shows found, processing most recent historical tour data...");
+        // Instead of test data, process the most recent actual tour (Summer 2023)
+        return await this.processHistoricalTourData();
       }
       
       console.log(`📊 Calculating statistics for: ${currentTour.tourName}`);
@@ -456,6 +456,93 @@ class TourStatisticsCalculator {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Process actual historical tour data (Summer 2025 - most recent completed tour)
+   * Gets real venue and show data instead of using test data
+   */
+  async processHistoricalTourData() {
+    console.log("🏛️ Processing Summer 2025 tour data...");
+    
+    try {
+      // Get Summer 2025 tour shows (July-August 2025)
+      const summer2025Shows = await this.phishNet.fetchShowsForYear('2025');
+      const tourShows = summer2025Shows.filter(show => {
+        const showDate = new Date(show.showdate);
+        return showDate.getMonth() >= 6 && showDate.getMonth() <= 7; // July-August
+      });
+      
+      if (tourShows.length === 0) {
+        console.log("⚠️ No Summer 2025 shows found, falling back to test data");
+        return await this.generateTestDataForVenueFixes();
+      }
+      
+      console.log(`📊 Found ${tourShows.length} Summer 2025 shows`);
+      
+      // Get the latest show from the tour
+      const latestShow = tourShows[tourShows.length - 1];
+      console.log(`🎵 Latest Summer 2025 show: ${latestShow.showdate} at ${latestShow.venue}`);
+      
+      // Process tour shows for gap calculations
+      const tourShowsWithGaps = [];
+      for (const show of tourShows) {
+        const setlist = await this.phishNet.fetchShowSetlist(show.showdate);
+        const songNames = this.phishNet.extractSongNames(setlist);
+        const songGaps = await this.phishNet.fetchSongGaps(songNames, show.showdate);
+        
+        tourShowsWithGaps.push({
+          showDate: show.showdate,
+          venue: show.venue,
+          location: show.location,
+          songGaps: songGaps.map(gap => ({
+            ...gap,
+            tourVenue: show.venue // Ensure venue consistency
+          }))
+        });
+      }
+      
+      // Get track durations from phish.in for Summer 2025
+      let allTourTrackDurations = [];
+      try {
+        for (const show of tourShows) {
+          const durations = await this.phishIn.getTrackDurations(show.showdate);
+          allTourTrackDurations = allTourTrackDurations.concat(
+            durations.map(d => ({
+              ...d,
+              venue: show.venue // Ensure venue consistency
+            }))
+          );
+        }
+      } catch (error) {
+        console.log("⚠️ Could not get track durations from phish.in:", error.message);
+        allTourTrackDurations = await this.getFallbackTrackDurations(latestShow.showdate);
+      }
+      
+      console.log(`🎵 Processing ${allTourTrackDurations.length} track durations`);
+      
+      // Calculate statistics using shared JavaScript engine
+      const longestSongs = tourCalculations.calculateLongestSongs(allTourTrackDurations);
+      const rarestSongs = tourCalculations.calculateTourProgressiveRarestSongs(tourShowsWithGaps, "Summer Tour 2025");
+      
+      return {
+        tourName: "Summer Tour 2025",
+        lastUpdated: new Date().toISOString(),
+        latestShow: latestShow.showdate,
+        longestSongs: longestSongs.slice(0, 3), // Top 3
+        rarestSongs: rarestSongs.slice(0, 3), // Top 3
+        dataQuality: {
+          longestSongsCount: longestSongs.length,
+          rarestSongsCount: rarestSongs.length,
+          completeness: Math.min(100, Math.round((longestSongs.length + rarestSongs.length) / 6 * 100))
+        }
+      };
+      
+    } catch (error) {
+      console.log("❌ Error processing Summer 2025 data:", error.message);
+      console.log("🔄 Falling back to test data");
+      return await this.generateTestDataForVenueFixes();
+    }
   }
 
   /**
