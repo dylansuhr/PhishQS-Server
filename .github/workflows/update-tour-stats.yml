@@ -26,6 +26,9 @@ on:
           - 'test-calculation'
         default: 'update'
 
+permissions:
+  contents: write  # Required for pushing changes back to repo
+
 jobs:
   update-tour-statistics:
     runs-on: ubuntu-latest
