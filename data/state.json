@@ -1,12 +1,12 @@
 {
   "lastProcessedShow": "2024-07-31",
-  "lastUpdateTime": "2025-08-31T02:52:10.971Z",
+  "lastUpdateTime": "2025-08-31T02:56:14.096Z",
   "processingStatus": "success",
-  "calculationTimeMs": 4222,
-  "tourName": "Summer Tour 2024",
+  "calculationTimeMs": 87,
+  "tourName": "Venue Fix Test Tour",
   "dataQuality": {
-    "longestSongsCount": 0,
-    "rarestSongsCount": 0,
-    "completeness": 30
+    "longestSongsCount": 3,
+    "rarestSongsCount": 3,
+    "completeness": 100
   }
 }
